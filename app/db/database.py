@@ -1,12 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from decouple import config
+from config import settings
 
 # -------------------------
 # CONFIGURATION
 # -------------------------
-DATABASE_URL = config("DATABASE_URL", "sqlite:///./proteus.db")
+DATABASE_URL = settings.DATABASE_URL
 
 # For SQLite, check_same_thread must be False
 engine = create_engine(

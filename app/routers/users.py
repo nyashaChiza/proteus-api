@@ -5,9 +5,8 @@ from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.helpers.security import hash_password
-
+from app.helpers.auth import get_current_user
 router = APIRouter(
-    prefix="/users",
     tags=["users"]
 )
 
@@ -23,6 +22,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     hashed_pw = hash_password(user.password)
     db_user = User(
         email=user.email,
+        username=user.username,
         full_name=user.full_name,
         hashed_password=hashed_pw,
         is_admin=user.is_admin
@@ -36,14 +36,14 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 # READ ALL USERS
 # --------------------------
 @router.get("/", response_model=List[UserRead])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(User).offset(skip).limit(limit).all()
 
 # --------------------------
 # READ SINGLE USER
 # --------------------------
 @router.get("/{user_id}", response_model=UserRead)
-def read_user(user_id: int, db: Session = Depends(get_db)):
+def read_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -53,7 +53,7 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 # UPDATE USER
 # --------------------------
 @router.put("/{user_id}", response_model=UserRead)
-def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
+def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -75,7 +75,7 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
 # DELETE USER
 # --------------------------
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int, db: Session = Depends(get_db) ,current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
