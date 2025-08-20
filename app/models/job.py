@@ -10,6 +10,7 @@ class Job(Base):
     company = Column(String, nullable=True)
     location = Column(String, nullable=True)
     description = Column(Text, nullable=True)
+    status = Column(String, default="pending") #.e.g pending,applied
     url = Column(String, nullable=False, unique=True)
     source = Column(String, nullable=True)  # e.g., LinkedIn, Indeed
     created = Column(DateTime, default=datetime.utcnow)
