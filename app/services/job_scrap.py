@@ -3,6 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import random
 from typing import List, Dict
+from typing import List, Dict
+from app.models.job import Job
+from app.db.database import get_db
 
 
 BASE_HEADERS = {
@@ -148,3 +151,44 @@ def scrape_all_sites(query: str, limit_per_site: int = 5) -> List[Dict]:
     jobs.extend(scrape_zimbajob(query, limit_per_site))
     jobs.extend(scrape_ihararejobs(query, limit_per_site))
     return jobs[:limit_per_site * 4]
+
+from app.db.database import get_db
+from app.models.job import Job
+
+def save_jobs(query: str) -> int:
+    """
+    Save a list of jobs to the database.
+    Skips jobs that already exist (based on URL).
+    Returns the number of jobs inserted.
+    """
+    inserted_count = 0
+
+    # Get the actual session from the generator
+    db = next(get_db())
+
+    jobs = scrape_all_sites(query, limit_per_site=5)
+    for job_data in jobs:
+        url = job_data.get("link") or job_data.get("url")
+        if not url:
+            continue
+
+        # Check if job with same URL already exists
+        existing = db.query(Job).filter(Job.url == url).first()
+        if existing:
+            continue
+
+        job = Job(
+            title=job_data.get("title"),
+            company=job_data.get("company"),
+            location=job_data.get("location"),
+            description=job_data.get("summary") or job_data.get("description"),
+            url=url,
+            source=job_data.get("source"),
+        )
+        db.add(job)
+        inserted_count += 1
+
+    db.commit()
+    db.close()
+    return inserted_count
+
