@@ -7,10 +7,9 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
-    company = Column(String, nullable=False)
+    company = Column(String, nullable=True)
     location = Column(String, nullable=True)
-    description = Column(Text, nullable=False)
-    url = Column(String, nullable=False)
-    date_posted = Column(DateTime, default=datetime.utcnow)
+    description = Column(Text, nullable=True)
+    url = Column(String, nullable=False, unique=True)
     source = Column(String, nullable=True)  # e.g., LinkedIn, Indeed
     created = Column(DateTime, default=datetime.utcnow)
